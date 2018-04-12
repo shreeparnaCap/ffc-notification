@@ -21,11 +21,3 @@ StoreCareRepo.prototype.getStoreIds = function getStoreIds(){
 
 
 module.exports = StoreCareRepo; 
-
-
-// headers:
-//         {
-//             'content-type': headers['content-type'],
-//             'x-cap-api-auth-org-id': headers['orgId'],
-//             'authorization': headers['authorization']
-//         }

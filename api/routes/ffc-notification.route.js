@@ -12,7 +12,9 @@ router.get('/store', function(req, res){
 })
 
 router.get('/sendNotification/dataSanity', function(req, res){
-
+	logger.info("In Notification Router dataSanity");
+	ffcNotificationController.sendDataSanityNotification(req,res);
+	res.send("OK Notification Data Sanity");
 })
 
 module.exports = router;
