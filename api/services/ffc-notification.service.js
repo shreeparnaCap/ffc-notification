@@ -2,6 +2,8 @@ var logger = require('@capillarytech/arya').Logger.getLogger('ffc-notifn');
 var FfcNotificationsRepo = require('../repos/').getFfcNotificationRepo();
 var StoreCareRepo = require('../repos').getStoreCareRepo();
 var DBase = require('@capillarytech/arya-dbconnect');
+var currentTime = require('../utils/generics.util').getDateTime
+
 
 var dObject = new DBase({dbname:"authorization"});
 
@@ -12,24 +14,30 @@ var FfcNotificationService = function FfcNotificationService(){
 
 FfcNotificationService.prototype.test = function test(){
 	logger.info("Testing service");
-	FfcNotificationsRepo.getStoreIds();
+	FfcNotificationsRepo.getStoreIdsVisitorKpi();
 }
 
-FfcNotificationService.prototype.getStoreIds = function getStoreIds(orgId){
+FfcNotificationService.prototype.getStoreIdsVisitorKpi = function getStoreIdsVisitorKpi(orgId){
 	logger.info("In FfcNotificationService Stores")
-	return StoreCareRepo.getStoreIds()
+	return StoreCareRepo.getStoreIdsVisitorKpi()
 	.then((storeData) => {
 
-		logger.info("[@@@@@@@] STORES",storeData );
-		logger.info("[@@@@@@@] ORGID",orgId);
+		logger.info("[@@@] STORES",storeData);
+		logger.info("[@@@] ORGID",orgId);
 		var stores = [];
 
 		if(storeData[orgId] !== undefined){
 				var storeDataList = JSON.stringify(storeData[orgId].stores) ; 
 				storeDataList = JSON.parse(storeDataList)
+				
 				storeDataList.forEach(function(storeData){
-					//FIND DIFF
-					stores.push(storeData.storeId);
+					var lastEventTime = storeData.lastEventTime;
+					var diff = (Date.parse(currentTime()) - Date.parse(lastEventTime))/ (3600000)
+
+					if(diff>6){
+						logger.info("STORE lastEventTime is  --- ",diff);
+						stores.push(storeData.storeId);
+					}	
 				})
 		}		
 		
@@ -56,9 +64,22 @@ FfcNotificationService.prototype.getEnabledOrgs = function getEnabledOrgs(){
 
 }
 
+FfcNotificationService.prototype.getNotificationConfigs = function getNotificationConfigs(type){
+	var query = "SELECT * FROM ffc_notifications_meta_details.notification_configs WHERE type='"+type+"' ;";
+	return dObject.query(query).then(function(rows){
+		logger.info("Config Rows", rows);
+
+		return Promise.resolve(rows);
+	})
+}
+
 FfcNotificationService.prototype.getAdminUsersForStores = function getAdminUsersForStores(orgId, stores){
 	logger.info("In getAdminUsersForStores")
 	var queryAdminUsersForStores = 	"SELECT admin_user_id, ref_id FROM `masters`.`admin_user_roles` WHERE `org_id` = "+ orgId+" AND `type` = 'STORE' AND `ref_id` IN ( ";
+	var refId = "select a.id, a.org_id,a.role_name,a.role_type, b.ref_id, b.admin_user_id from org_roles as a join admin_user_roles as b  on a.id = b.role_id where a.org_id= 1195 and a.role_name='Zone Manager' "	
+
+
+
 	var storesStr = "";
 	stores.forEach(function(store){
 		if(storesStr === "")
@@ -116,8 +137,8 @@ FfcNotificationService.prototype.saveNotificationDetailsToDB = function saveNoti
 		logger.info("notificationTypes.DATA_SANITY --"+notificationOb.configId );
 
 
-		var insertQuery = "INSERT INTO `ffc_notifications_data_details`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `sent_time`, `status`, `message`, `createdBy`) VALUES (" 
-		+ notificationOb.configId+","+notificationOb.storeId+","+notificationOb.orgId+","+notificationOb.adminId+",'"+notificationOb.sentTime+"', '"+notificationOb.status+"', '"+
+		var insertQuery = "INSERT INTO `ffc_notifications_data_details`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `role`, `sent_time`, `status`, `message`, `createdBy`) VALUES (" 
+		+ notificationOb.configId+","+notificationOb.storeId+","+notificationOb.orgId+","+notificationOb.adminId+","+ "'StoreManager'"+",'"+notificationOb.sentTime+"', '"+notificationOb.status+"', '"+
 		notificationOb.message+"',"+notificationOb.createdBy+");";
 
 		logger.info("INSERT QUERY"+insertQuery);

@@ -7,7 +7,7 @@ var StoreCareRepo = function StoreCareRepo(){
 	logger.info("In Store Repo");
 }
 
-StoreCareRepo.prototype.getStoreIds = function getStoreIds(){
+StoreCareRepo.prototype.getStoreIdsVisitorKpi = function getStoreIdsVisitorKpi(){
 	logger.info("In get Store Care");
 	const getStoreIdUrl = 'http://storecare.nightly.capillary.in:8002/notifications';
 	var options = {
