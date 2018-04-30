@@ -11,15 +11,16 @@ router.get('/store', function(req, res){
 	// return Promise.resolve("RESULT OK");
 })
 
-router.get('/sendNotification/dataSanity', function(req, res){
+router.get('/sendNotification/dataSanity/:config_id', function(req, res){
 	logger.info("In Notification Router dataSanity");
 	ffcNotificationController.sendDataSanityNotification(req,res);
 	res.send("OK Notification Data Sanity");
 })
 
-router.get('notification/:notificationId', function(req, res){
-	logger.info("In");
+router.get('/notification/:notificationId', function(req, res){
+	logger.info("In get One Notification");
 	ffcNotificationController.getNotificationDetails(req,res);
+	// res.send("OK get one notifn")
 })
 
 router.get

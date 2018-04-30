@@ -61,21 +61,45 @@ FfcNotificationService.prototype.getEnabledOrgs = function getEnabledOrgs(){
 		.catch(function(err){
 			logger.error(err);
 		})
+}
 
+FfcNotificationService.prototype.checkOrgEnabled = function checkOrgEnabled(orgId){
+	logger.info("In checkOrgEnabled");
+	return FfcNotificationsRepo.checkOrgEnabled(orgId)
+	.then(function(isEnabled){
+		logger.info("SERVICE ---",isEnabled);
+		return Promise.resolve(isEnabled)
+	}).catch(function(err){
+		return Promise.reject(err);
+	})
 }
 
 FfcNotificationService.prototype.getNotificationConfigs = function getNotificationConfigs(type){
 	var query = "SELECT * FROM ffc_notifications_meta_details.notification_configs WHERE type='"+type+"' ;";
 	return dObject.query(query).then(function(rows){
 		logger.info("Config Rows", rows);
-
 		return Promise.resolve(rows);
+	})
+}
+
+FfcNotificationService.prototype.getConfigDetailsById = function getConfigDetailsById(configId){
+	logger.info("In getConfigDetailsById service")
+	return FfcNotificationsRepo.getConfig(configId).then(function(config){
+		logger.info("In getConfigDetailsById service Promise")
+		config.forEach(function(row){
+			logger.info("ROWWWWW",row)
+			return Promise.resolve(row);
+		})
+		logger.info("comes here ")
+		return Promise.resolve(config);
+	}).catch(function(err){
+		return Promise.reject(err);
 	})
 }
 
 FfcNotificationService.prototype.getAdminUsersForStores = function getAdminUsersForStores(orgId, stores){
 	logger.info("In getAdminUsersForStores")
-	var queryAdminUsersForStores = 	"SELECT admin_user_id, ref_id FROM `masters`.`admin_user_roles` WHERE `org_id` = "+ orgId+" AND `type` = 'STORE' AND `ref_id` IN ( ";
+	var queryAdminUsersForStores = 	"SELECT admin_user_id, ref_id, org_id FROM `masters`.`admin_user_roles` WHERE `org_id` = "+ orgId+" AND `type` = 'STORE' AND `ref_id` IN ( ";
 	var refId = "select a.id, a.org_id,a.role_name,a.role_type, b.ref_id, b.admin_user_id from org_roles as a join admin_user_roles as b  on a.id = b.role_id where a.org_id= 1195 and a.role_name='Zone Manager' "	
 
 
@@ -131,15 +155,21 @@ FfcNotificationService.prototype.getAdminUsersForStores = function getAdminUsers
 			logger.error(err);
 		})
 }
+FfcNotificationService.prototype.getAdminUserStoreMappingSelf = function getAdminUserStoreMappingSelf(orgId, selfRoles){
+	roles = selfRoles.split(",");
+	
+
+
+}
 
 FfcNotificationService.prototype.saveNotificationDetailsToDB = function saveNotificationDetailsToDB(notificationOb){
 		logger.info("IN SRVC ---- ");
 		logger.info("notificationTypes.DATA_SANITY --"+notificationOb.configId );
 
-
-		var insertQuery = "INSERT INTO `ffc_notifications_data_details`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `role`, `sent_time`, `status`, `message`, `createdBy`) VALUES (" 
-		+ notificationOb.configId+","+notificationOb.storeId+","+notificationOb.orgId+","+notificationOb.adminId+","+ "'StoreManager'"+",'"+notificationOb.sentTime+"', '"+notificationOb.status+"', '"+
-		notificationOb.message+"',"+notificationOb.createdBy+");";
+		var insertQuery = "INSERT INTO `ffc_notifications_data_details`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `role`, `sent_time`, `status`, `readAt`, `title`, `header`, `message`, `channel`, `createdBy`, `createdOn`) VALUES (" 
+		+ notificationOb.configId+","+notificationOb.storeId+","+notificationOb.orgId+","+notificationOb.adminId+","+ "'"+notificationOb.role+"'"+",'"+notificationOb.sentTime+"', '"+notificationOb.status+
+		"', '"+ notificationOb.readAt+"', '"+notificationOb.title+"', '"+notificationOb.header
+		+"', '"+notificationOb.message+"', '"+notificationOb.channel+"', "+notificationOb.createdBy+ ", '" +notificationOb.createdOn+"' );";
 
 		logger.info("INSERT QUERY"+insertQuery);
 
@@ -152,6 +182,25 @@ FfcNotificationService.prototype.saveNotificationDetailsToDB = function saveNoti
 		.catch(function(err){
 			logger.error(err);
 		})
+}
+
+FfcNotificationService.prototype.getMessageContent = function getMessageContent(config){
+			var kpiType = config.kpi;
+			var notificationType = config.type;
+			role = 
+			entityType = 
+			entityName = 
+			getTemplate(notificationType, kpi, role, entityType, entityName)
+}
+
+FfcNotificationService.prototype.getNotificationDetails = function getNotificationDetails(options){
+	return FfcNotificationsRepo.getNotifications(options).then(function(notificationDetails){
+		logger.info("In service get notification - ",notificationDetails);
+		return Promise.resolve(notificationDetails);
+	}).catch(function(err){
+		logger.error(err);
+		return Promise.reject(err);
+	})
 }
 
 

@@ -13,21 +13,25 @@ templateGenerator.prototype.getTemplate = function getTemplate(notificationType,
 	var messageContent="";
 
 	if(notificationType === notificationTypes.DATA_SANITY){
-		if(kpi === kpiTypes.visitor){
+		
 			if(role === kpiTypes.self){
-				messageContent = "Visitor Data for your "+ entityType +" - "+ storeName +" is not available for today. ";
+				messageContent = kpi+ " Data for your "+ entityType +" - "+ storeName +" is not available for today. ";
 			}
 			else if(role === kpiTypes.parent){
-				messageContent = " Visitor Data for the below "+ entityType +" under you is not available for today. ";
+				messageContent = kpi+ " Data for the below "+ entityType +" under you is not available for today. ";
 				var storeList="";
 				entityType.forEach(function(entity){
 					storeList+=entity +", ";
 				})
 				messageContent+=storeList;
 			}
-		}
+		
 	}
 
 
 	return messageContent;
 } 
+
+module.exports = {
+	templateGenerator
+}

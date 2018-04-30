@@ -3,13 +3,16 @@ var notificationService = require('../services/').getFfcNotificationService();
 var notificationDetailsModel = require('../models/ffc-notification.model').NotificationDetails;
 var notificationTypes = require('../lib/notificationTypes').NotificationTypes;
 var currentTime = require('../utils/generics.util').getDateTime;
+var templateGenerator = require('../utils/templateGenerator.util').templateGenerator;
 var kpiTypes = require('../lib/kpiTypes').kpiEnum;
 var kpiTypes = require('../lib/kpiTypes').rolesEnum;
-
+var BaseController = require('./base.controller');
+var util = require('util');
 
 var FfcNotificationController = function FfcNotificationController(){
 	logger.info("In Notification Controller");
 } 
+util.inherits(FfcNotificationController,BaseController)
 
 FfcNotificationController.prototype.testController = function testController(){
 	logger.info("In notification Controller");
@@ -25,59 +28,99 @@ FfcNotificationController.prototype.getStoreIds = function getStoreIds(req, res)
 
 FfcNotificationController.prototype.getNotificationDetails = function getNotificationDetails(req, res){
 	logger.info("getNotificationDetails Controller");
-	var notificationId = req.params.notificationId;
-	logger.info("notificationId", notificationId);
+	var options = {}
 
+	var notificationId = req.params.notificationId;	
+	options.notificationId = req.params.notificationId;
+	logger.info(" Received NotificationId", notificationId);
+	var that = this;
+	
+	notificationService.getNotificationDetails(options)
+	.then(function(response){
+		logger.info("Notification Respose", response);
+		logger.info(response instanceof Array);
+		logger.info(response[0]);
+		response = response[0];
+		
+		var obj = {}
+		obj['type'] = "FFC";
+		obj['id'] = response.id;
+		obj['message'] = response.message;
+		obj['title'] = response.title;
+		obj['header'] = response.header;
+		obj['notificationType'] = response.priority_type;
+		obj['orgId'] = response.org_id;
+		obj['status'] = response.readAt;
+		obj['date'] = currentTime();
+		obj['userId'] = response.user_id;
+		obj["communicate"] = false;
+		obj['channel'] = response.channel;
+		obj['text'] = response.message;
+		// obj['entityList'] = 
+
+		logger.info("Object Created",obj);
+		res.json(that.getSuccessResponse("notification", obj));
+	}).catch(function(err){
+		logger.error(err);
+		res.json(that.getErrorResponse(err));
+	})
+	
 }
 
 FfcNotificationController.prototype.sendDataSanityNotification = function sendDataSanityNotification(req, res){
 	logger.info("In sendDataSanityNotification");
+	var that = this;
+	var configId = req.params.config_id;
 
-	var type='DATA-SANITY';
-	var dataSanityConfigsPromise = notificationService.getNotificationConfigs(type);
-	var enabledOrgsPRomise = notificationService.getEnabledOrgs();
-	 
-	dataSanityConfigsPromise.then(function(configs){
-		logger.info("CONFIGS - ", configs );
+	// var dataSanityConfigsPromise = notificationService.getNotificationConfigs(type);
+	// var enabledOrgsPRomise = notificationService.getEnabledOrgs();
+	// dataSanityConfigsPromise.then(function(configs){
+		// logger.info("CONFIGS - ", configs );
+		// configs.forEach(function(config){
+		// 	notificationService.getMessageContent(config);
+		// })
 
-		configs.forEach(function(config){
-			var kpiType = config.kpi;
-			
-			if(kpiType == kpiTypes.visitor){
+		notificationService.getConfigDetailsById(configId).then(function(config){
+		config = config[0];
+		that.orgId = config.orgId;
+		var selfRoles = config.selfRoles;
 
-			}
-		})
-
-
-
-		enabledOrgsPRomise.then(function(rows){
-			rows.forEach(function(orgId){
-
-
-				var storesPromise = notificationService.getStoreIdsVisitorKpi(orgId);
+		logger.info("Config Org id",config.orgId);
+		// enabledOrgsPRomise.then(function(rows){
+		// 	rows.forEach(function(orgId){
+		
+		notificationService.checkOrgEnabled(that.orgId).then(function(isEnabled){
+				logger.info("IS ENABLED - ",isEnabled);
+				var storesPromise = notificationService.getStoreIdsVisitorKpi(that.orgId);
 				
 				storesPromise.then(function(stores){
-					var adminUserStoreListPromise = notificationService.getAdminUsersForStores(orgId, stores);	
+					var adminUserStoreListPromise = notificationService.getAdminUsersForStores(that.orgId, stores);	
 
 					adminUserStoreListPromise.then(function(adminUserStoreList){
 						logger.info("IN CONTROLLER ADMIN STORE LIST");
+						logger.info("Admin Result ", adminUserStoreList);
 						
 						adminUserStoreList.forEach(function(row){
 							logger.info(row.storeId + " - "+ row.adminId);
-							logger.info("notificationTypes.DATA_SANITY --"+notificationTypes.DATA_SANITY +", orgId -"+orgId+", currentTime- "+ currentTime());
 		 					
 		 					//TODO: fetch from DB use placeholders
-							var message = "We did not receive data from your Store -"+ row.storeId +"for the org Id - "+orgId;
-
+							var message = "We did not receive data from your Store -";
 
 							var notificationDetails = new notificationDetailsModel(
 															notificationTypes.DATA_SANITY,
 															row.storeId,
-															orgId,
+															that.orgId,
 															row.adminId,
+															row.role,
 															currentTime(),
 															"SENT",
-															message
+															undefined,
+															"TITLE",
+															"HEADER",
+															message,
+															"PUSH",
+															undefined,
+															undefined
 															);
 							var notificationIdPromise = notificationService.saveNotificationDetailsToDB(notificationDetails);
 
@@ -123,11 +166,11 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 						})	
 					})
 				})
-			})
+			// })
 
 		})
-
 	})
+	// })
 }
 
 module.exports = FfcNotificationController;
