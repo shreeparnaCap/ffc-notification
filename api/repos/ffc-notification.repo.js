@@ -60,8 +60,8 @@ FfcNotificationRepo.prototype.checkOrgEnabled = function checkOrgEnabled(orgId){
 	var query = "SELECT `is_ffc_enabled` FROM ffc_notifications_meta_details.org_configs WHERE org_id = "+orgId+";";
 	return dObject.query(query)
 	.then(function(row){
-		logger.info("Org ID --",row[0].org_id);
-		return Promise.resolve(row[0].org_id);
+		logger.info("is enabled org",row[0]);
+		return Promise.resolve(row[0].is_ffc_enabled);
 	})
 }
 

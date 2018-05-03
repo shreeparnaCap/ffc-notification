@@ -83,7 +83,7 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 		notificationService.getConfigDetailsById(configId).then(function(config){
 		config = config[0];
 		that.orgId = config.orgId;
-		var selfRoles = config.selfRoles;
+		that.selfRoles = config.selfRoles;
 
 		logger.info("Config Org id",config.orgId);
 		// enabledOrgsPRomise.then(function(rows){
@@ -94,6 +94,7 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 				var storesPromise = notificationService.getStoreIdsVisitorKpi(that.orgId);
 				
 				storesPromise.then(function(stores){
+					notificationService.getAdminUserStoreMappingSelf(that.orgId,that.selfRoles);
 					var adminUserStoreListPromise = notificationService.getAdminUsersForStores(that.orgId, stores);	
 
 					adminUserStoreListPromise.then(function(adminUserStoreList){
