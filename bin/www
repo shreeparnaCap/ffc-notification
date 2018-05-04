@@ -11,9 +11,9 @@ var app = require('../main');
 // Initializing Arya to bootup services
 var options = {
 	'module': 'ffc-notifn',
-	'port': 2025,
+	'port': 2028,
 	'protocol': 'http'
 };
 
 // Arya will create the server based on passed protocol
-Arya.StartApp('aira').createServer(app, options);
+Arya.StartApp('ffc-notifn').createServer(app, options);

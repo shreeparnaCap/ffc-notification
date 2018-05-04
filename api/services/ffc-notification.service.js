@@ -7,7 +7,6 @@ var currentTime = require('../utils/generics.util').getDateTime
 
 var dObject = new DBase({dbname:"authorization"});
 
-
 var FfcNotificationService = function FfcNotificationService(){
 	logger.info("In FfcNotificationService");
 }
