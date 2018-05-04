@@ -5,8 +5,6 @@ const auth = require('@capillarytech/arya').AuthServiceSdk();
 const mongoose = Promise.promisifyAll(require('mongoose'));
 mongoose.Promise = Promise;
 const serviceMapper = require('@capillarytech/arya').ServiceFinder;
-const airaDBParams = serviceMapper.getDbParams('aira_mongo');
-const airaDBValues = serviceMapper.getDbServiceValues('aira_mongo');
 const ffcNotifnRoutes = require("./routes/ffc-notification.route.js")
 
 const router = express.Router(); // eslint-disable-line new-cap

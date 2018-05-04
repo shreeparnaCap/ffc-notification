@@ -1,3 +1,4 @@
+var amqp = require('amqplib/callback_api');
 var logger = require('@capillarytech/arya').Logger.getLogger('ffc-notifn')
 var notificationService = require('../services/').getFfcNotificationService();
 var notificationDetailsModel = require('../models/ffc-notification.model').NotificationDetails;
@@ -8,6 +9,9 @@ var kpiTypes = require('../lib/kpiTypes').kpiEnum;
 var kpiTypes = require('../lib/kpiTypes').rolesEnum;
 var BaseController = require('./base.controller');
 var util = require('util');
+const serviceMapper = require('@capillarytech/arya').ServiceFinder;
+const rabbitParams = serviceMapper.getDbParams('rabbitmq');
+const rabbitValues = serviceMapper.getDbServiceValues('rabbitmq');
 
 var FfcNotificationController = function FfcNotificationController(){
 	logger.info("In Notification Controller");
@@ -41,21 +45,29 @@ FfcNotificationController.prototype.getNotificationDetails = function getNotific
 		logger.info(response instanceof Array);
 		logger.info(response[0]);
 		response = response[0];
-		
+
 		var obj = {}
+		obj['_id'] = response.id;
 		obj['type'] = "FFC";
-		obj['id'] = response.id;
-		obj['message'] = response.message;
-		obj['title'] = response.title;
-		obj['header'] = response.header;
-		obj['notificationType'] = response.priority_type;
-		obj['orgId'] = response.org_id;
-		obj['status'] = response.readAt;
 		obj['date'] = currentTime();
-		obj['userId'] = response.user_id;
+		obj['orgId'] = response.org_id;
 		obj["communicate"] = false;
+		obj['message'] = response.message;
+		obj['status'] = (response.readAt !== null) ? "UNREAD": "READ";
+		obj['userId'] = response.user_id;
+		obj["entityList"] = [{}]
 		obj['channel'] = response.channel;
-		obj['text'] = response.message;
+		obj['notificationType'] = response.priority_type;
+		obj['title'] = response.text;
+		obj['text'] = response.text;
+		obj['kpis'] = [{
+			"settings": {
+				"units": "currency",
+				"decimals": 2
+			},
+			"name": "Data Missing Report"
+		}];
+		obj["__v"]=  0;
 		// obj['entityList'] = 
 
 		logger.info("Object Created",obj);
@@ -100,6 +112,16 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 						logger.info("IN CONTROLLER ADMIN STORE LIST");
 						logger.info("Admin Result ", adminUserStoreList);
 						
+						var connectionString ;
+
+						if (process.env.NODE_ENV === 'production') {
+							connectionString = "amqp://" + rabbitValues.user + ":" + rabbitValues.pass.replace(/\"/g,"") + "@" + rabbitValues.host + "/";
+						} else {
+							connectionString = "amqp:";//capillary:123";
+						}
+						amqp.connect(connectionString, function(err, connection) {
+
+
 						adminUserStoreList.forEach(function(row){
 							logger.info(row.storeId + " - "+ row.adminId);
 		 					
@@ -129,48 +151,51 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 								var title = "FFC Data Not Received";
 								var date = '"'+currentTime()+'"';
 
-								var apiObject = {
-									"data" : {
-									"message" : message,
-									"title" : title,
-									"payload":{
-											"orgId" : orgId,
-											"id" : notificationId,
-											"title" : title,
-											"message" : message,
-											"level": "INFO",
-											"date": date,
-											"userId": row.adminId,
-											"channel": "push",
-											"notificationType": "INFO"
-										}
-									}
-								}
-
-
-
-								// var uri = 'https://fcm.googleapis.com/fcm/send';
-								// var options={
-								// 	method:'POST',
-								// 	uri: ,
-								// 	headers:
-								// }
+								var obj = {}
+								obj['_id'] = notificationId;
+								obj['type'] = "FFC";
+								obj['date'] = currentTime();
+								obj['orgId'] = that.orgId;
+								obj["communicate"] = false;
+								obj['message'] = message;
+								obj['status'] = "UNREAD";
+								obj['userId'] = row.adminId;
+								obj["entityList"] = [{}]
+								obj['channel'] = "push";
+								obj['notificationType'] = "INFO";
+								obj['title'] = title;
+								obj['text'] = message;
+								obj['kpis'] = [{
+									"settings": {
+										"units": "currency",
+										"decimals": 2
+									},
+									"name": "Data Missing Report"
+								}];
+								obj["__v"]=  0;
+								
 								logger.info("MESSAGE - "+message+", TITLE - "+title+" ORGID - "+orgId+" TITLE - "+title +" userId"+row.adminId)
-								logger.info(JSON.toString(apiObject));
-							})
-							.catch(function(err){
+
+								connection.createChannel(function(err, channel) {
+									var queue = 'notification_communicator';
+								
+									channel.assertQueue(queue, {durable: true});
+									// Note: on Node 6 Buffer.from(msg) should be used
+									channel.sendToQueue(queue, new Buffer(JSON.stringify(obj), {persistent: true}));
+									logger.info("Sent message ",JSON.stringify(obj,4, null));
+									
+								});
+							}).catch(function(err){
+								logger.info("WHTA THE HELL ARFE YOU DOING ", err)
+								
 								logger.error(err);
-							})
-							
-
-						})	
+							});
+						})
 					})
+				})				
 				})
-			// })
-
+			})
 		})
-	})
-	// })
-}
+	}
 
 module.exports = FfcNotificationController;
