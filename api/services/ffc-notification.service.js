@@ -183,7 +183,7 @@ FfcNotificationService.prototype.getAdminUserStoreMappingSelf = function getAdmi
 						logger.info("STORES NOW 2--- ",that.adminStoreMap);
 				}
 				else
-					getStores(row.child_entity_id, row.child_entity_type,store_ids);
+					getStores(row.child_entity_id, row.child_entity_type,user_id);
 			})
 		})
 	}
