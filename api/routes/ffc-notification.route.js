@@ -28,6 +28,5 @@ router.get('/notifications', function(req,res){
 	ffcNotificationController.getAllNotifications(req,res);
 })
 
-router.get
 
 module.exports = router;

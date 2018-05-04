@@ -19,9 +19,9 @@ FfcNotificationRepo.prototype.getNotifications =  function getNotifications(opti
 	var fetchQuery = "";
 
 	if(options.notificationId != undefined)
-		fetchQuery = "SELECT * FROM  ffc_notifications_data_details.notifications WHERE `id`= "+options.notificationId+" ;";
+		fetchQuery = "SELECT * FROM  ffc_notifications.notifications WHERE `id`= "+options.notificationId+" ;";
 	else
-		fetchQuery = "SELECT * FROM  ffc_notifications_data_details.notifications";
+		fetchQuery = "SELECT * FROM  ffc_notifications.notifications";
 
 	logger.info("get notifications qquery",fetchQuery);
 	return dObject.query(fetchQuery)
@@ -37,7 +37,7 @@ FfcNotificationRepo.prototype.getNotifications =  function getNotifications(opti
 FfcNotificationRepo.prototype.getConfig = function getConfig(configId){
 	if(configId != undefined){
 		logger.info("In getConfigDetailsById REPO")
-		var fetchQuery = "SELECT * FROM ffc_notifications_meta_details.notification_configs WHERE id ="+configId +";";
+		var fetchQuery = "SELECT * FROM ffc_notifications.notification_configs WHERE id ="+configId +";";
 		logger.info(fetchQuery);
 		
 
@@ -62,7 +62,7 @@ FfcNotificationRepo.prototype.getConfig = function getConfig(configId){
 
 FfcNotificationRepo.prototype.checkOrgEnabled = function checkOrgEnabled(orgId){
 	logger.info("Org Id in repo -",orgId)
-	var query = "SELECT `is_ffc_enabled` FROM ffc_notifications_meta_details.org_configs WHERE org_id = "+orgId+";";
+	var query = "SELECT `is_ffc_enabled` FROM ffc_notifications.org_configs WHERE org_id = "+orgId+";";
 	return dObject.query(query)
 	.then(function(row){
 		logger.info("is enabled org",row[0]);
