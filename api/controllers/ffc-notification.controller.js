@@ -199,4 +199,28 @@ FfcNotificationController.prototype.sendDataSanityNotification = function sendDa
 		})
 	}
 
+	FfcNotificationController.prototype.getAllNotifications = function getAllNotifications(req,res){
+		logger.info("In getAllNotifications");
+		var options = {}
+		var that =this;
+		notificationService.getNotificationDetails(options).then(function(response){
+			logger.info("Get all Notifications Controller");
+			var obj = []
+			obj['response']=[];
+			response.forEach(function(res){
+				var ob = {};
+				ob["id"]=res.id;
+				ob["text"]=res.message;
+				ob["title"]=res.title;
+				ob["level"]=res.priority_type;
+				ob["orgId"]=res.org_id;
+				ob["status"]=res.status;
+				obj.push(ob);
+			})
+
+			logger.info("Object Created", obj);
+			res.json(that.getSuccessResponse("notifications",obj));
+		});
+	}
+
 module.exports = FfcNotificationController;

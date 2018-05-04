@@ -15,10 +15,15 @@ var FfcNotificationRepo =  function FfcNotificationRepo(){
 // }
 
 FfcNotificationRepo.prototype.getNotifications =  function getNotifications(options){
-	logger.info("In getNotifications");
+	logger.info("In getNotifications",options);
+	var fetchQuery = "";
 
-	var fetchQuery = "SELECT * FROM  ffc_notifications_data_details.notifications WHERE `id`= "+options.notificationId+" ;";
-	
+	if(options.notificationId != undefined)
+		fetchQuery = "SELECT * FROM  ffc_notifications_data_details.notifications WHERE `id`= "+options.notificationId+" ;";
+	else
+		fetchQuery = "SELECT * FROM  ffc_notifications_data_details.notifications";
+
+	logger.info("get notifications qquery",fetchQuery);
 	return dObject.query(fetchQuery)
 	.then(function(notificationRow){
 		logger.info("ROWS  -------- " , notificationRow);

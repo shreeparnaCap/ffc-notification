@@ -23,6 +23,11 @@ router.get('/notification/:notificationId', function(req, res){
 	// res.send("OK get one notifn")
 })
 
+router.get('/notifications', function(req,res){
+	logger.info("Inside get all notifications");
+	ffcNotificationController.getAllNotifications(req,res);
+})
+
 router.get
 
 module.exports = router;
