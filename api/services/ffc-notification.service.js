@@ -156,10 +156,72 @@ FfcNotificationService.prototype.getAdminUsersForStores = function getAdminUsers
 		})
 }
 FfcNotificationService.prototype.getAdminUserStoreMappingSelf = function getAdminUserStoreMappingSelf(orgId, selfRoles){
+	logger.info("In getAdminUserStoreMappingSelf Service")
 	roles = selfRoles.split(",");
+	var dMasters = new DBase({ orgId:orgId, dbname:"masters"})
+	this.adminStoreMap = {}
+	var store_ids = {};
+	var that = this;
 	
+	var getStores = function getStores(parent_id,parent_Type, user_id){
+		logger.info("In function getStores");
+		logger.info("User Id in getStores",user_id);
+		var query = "SELECT parent_entity_id, parent_entity_type, child_entity_id, child_entity_type from org_entity_relations WHERE parent_entity_id = "+parent_id;
+		logger.info("getStores query : ", query);
+		dMasters.query(query).then(function(rows){
+			rows.forEach(function(row){
+				if(row.child_entity_type == "STORE"){
 
+					logger.info("Adding store -",row.child_entity_id)
+					if(that.adminStoreMap[user_id] == undefined){
+						logger.info("adminStoreMap not defined")
+						that.adminStoreMap[user_id] = [];
+					}
+						that.adminStoreMap[user_id].push(row.child_entity_id);	
+						logger.info("Pushed - "+row.child_entity_id +"for user id -"+user_id);
+						logger.info("STORES NOW 2--- ",that.adminStoreMap);
+				}
+				else
+					getStores(row.child_entity_id, row.child_entity_type,user_id);
+			})
+		})
+	}
+	
+	var adminUserIdQuery = "SELECT DISTINCT(admin_user_id),ref_id , role_id FROM admin_user_roles WHERE role_id =  (SELECT id FROM org_roles WHERE org_id="+orgId+" AND role_name='Regional Sales Manager') AND is_active =1 AND admin_user_id=12784761";
+	logger.info("adminUserIdQuery : ", adminUserIdQuery);
+	dMasters.query(adminUserIdQuery).then(function(rows){
 
+		// rows.forEach(function(row){
+		// 	logger.info("TEST ref_id", row.ref_id);
+		// 	logger.info("TEST admin_user_id",row.admin_user_id)
+		// })
+		rows.forEach(function(row){
+			logger.info("ADMIN USER ID",row);
+			logger.info("TEST admin_user_id",row.admin_user_id)
+			var adminStores = {}
+			var ref_id = row.ref_id;
+			var user_id = row.admin_user_id;
+			
+			
+			if(that.adminStoreMap[user_id] == undefined)
+				that.adminStoreMap[user_id]=[];
+
+			var query = "SELECT parent_entity_id, parent_entity_type, child_entity_id, child_entity_type from org_entity_relations WHERE parent_entity_id=" + ref_id;
+			
+			dMasters.query(query).then(function(rows){
+				rows.forEach(function(row){
+					if(row.child_entity_type == "STORE"){
+						
+						that.adminStoreMap[user_id].push(row.child_entity_id);
+						logger.info("STORES NOW --- ",that.adminStoreMap);
+					}
+					else
+						getStores(row.child_entity_id, row.child_entity_type,user_id);
+				})
+			})
+		})
+	})	
+	logger.log("ADMIN STORE MAP LIST", that.adminStoreMap);
 }
 
 FfcNotificationService.prototype.saveNotificationDetailsToDB = function saveNotificationDetailsToDB(notificationOb){
