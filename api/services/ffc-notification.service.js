@@ -47,7 +47,7 @@ FfcNotificationService.prototype.getStoreIdsVisitorKpi = function getStoreIdsVis
 
 FfcNotificationService.prototype.getEnabledOrgs = function getEnabledOrgs(){
 	logger.info("In getEnabledOrgs");
-	var queryEnabledOrgs = "select org_id from ffc_notifications.org_configs where is_ffc_enabled=1";
+	var queryEnabledOrgs = "select org_id from ffc_notification.org_configs where is_ffc_enabled=1";
 
 	return dObject.query(queryEnabledOrgs)
 		.then(function(rows){
@@ -75,7 +75,7 @@ FfcNotificationService.prototype.checkOrgEnabled = function checkOrgEnabled(orgI
 }
 
 FfcNotificationService.prototype.getNotificationConfigs = function getNotificationConfigs(type){
-	var query = "SELECT * FROM ffc_notifications.notification_configs WHERE type='"+type+"' ;";
+	var query = "SELECT * FROM ffc_notification.notification_configs WHERE type='"+type+"' ;";
 	return dObject.query(query).then(function(rows){
 		logger.info("Config Rows", rows);
 		return Promise.resolve(rows);
@@ -228,7 +228,7 @@ FfcNotificationService.prototype.saveNotificationDetailsToDB = function saveNoti
 		logger.info("IN SRVC ---- ");
 		logger.info("notificationTypes.DATA_SANITY --"+notificationOb.configId );
 
-		var insertQuery = "INSERT INTO `ffc_notifications`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `role`, `sent_time`, `status`, `readAt`, `title`, `header`, `message`, `channel`, `createdBy`, `createdOn`) VALUES (" 
+		var insertQuery = "INSERT INTO `ffc_notification`.`notifications`(`notification_config_id`, `store_id`, `org_id`, `user_id`, `role`, `sent_time`, `status`, `readAt`, `title`, `header`, `message`, `channel`, `createdBy`, `createdOn`) VALUES (" 
 		+ notificationOb.configId+","+notificationOb.storeId+","+notificationOb.orgId+","+notificationOb.adminId+","+ "'"+notificationOb.role+"'"+",'"+notificationOb.sentTime+"', '"+notificationOb.status+
 		"', '"+ notificationOb.readAt+"', '"+notificationOb.title+"', '"+notificationOb.header
 		+"', '"+notificationOb.message+"', '"+notificationOb.channel+"', "+notificationOb.createdBy+ ", '" +notificationOb.createdOn+"' );";
